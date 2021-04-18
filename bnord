@@ -1,0 +1,170 @@
+#!/usr/bin/env bash
+################################################################################
+# bnord - A wrapper for nordvpn's curl api for finding recommended servers.
+################################################################################
+
+PROGDIR="$(realpath $(dirname $0))"
+
+# list the top 10 recommended servers
+function list_recommended
+{
+    curl --silent "https://api.nordvpn.com/v1/servers/recommendations" | jq --raw-output 'limit(10;.[]) | .hostname'
+}
+
+function usage
+{
+echo "\
+usage: $0 [option]... operation
+
+This program must be run as root. ctrl-c to stop a connection.
+
+Operation can be one of the following
+
+  update                Download new nordvpn server config archive.
+
+  init                  Install server configs to tmpfs at /mnt/vpnconfigs .
+
+  deinit                Unmount /mnt/vpnconfigs .
+
+  connect [server]      Connect to the recommended server. Alternatively
+                        connect via the short name (ie. us3914).
+
+  list                  List servers. Dump everything if args is not provided.
+
+Options:
+
+  -h, --help            Print this help message.
+"
+}
+
+# Transform long opts to short
+for arg in "$@"
+do
+    shift
+    case "$arg" in
+        "--help")
+            set -- "$@" "-h"
+            ;;
+        *)
+            set -- "$@" "$arg"
+            ;;
+    esac
+done
+
+# Process short opts mixed with positional args
+declare -a ARGS
+while [ $# -gt 0 ]
+do
+    unset OPTIND
+    unset OPTARG
+
+    while getopts "h" OPTION; do
+        case $OPTION in
+        h)
+            usage
+            exit 0
+            ;;
+        *)
+            usage
+            exit 1
+            ;;
+        esac
+    done
+
+    shift $((OPTIND-1))
+    if [ ! -z "$1" ]
+    then
+        ARGS+=("$1")
+    fi
+    shift
+done
+
+# set positional parameters to become ARGS
+set -- "${ARGS[@]}"
+
+operation="$1"
+
+if [ -z "$operation" ]
+then
+    usage
+    exit 1
+fi
+
+if [ "$operation" == "update" ]
+then
+    cd $PROGDIR
+
+    wget https://downloads.nordcdn.com/configs/archives/servers/ovpn.zip
+    if [ "$?" != "0" ]
+    then
+        echo "ERROR: Could not retrieve new configs or place them in $(pwd)." >&2
+        exit 1
+    fi
+
+    unzip ovpn.zip
+    tar -zcf ovpn.tar.gz ovpn_tcp ovpn_udp
+    rm -rf ovpn_tcp ovpn_udp ovpn.zip
+elif [ "$operation" == "init" ]
+then
+    if [[ $EUID -ne 0 ]]
+    then
+        echo "ERROR: The '$operation' operation must be run as root." >&2
+        exit 1
+    fi
+
+    if [ -d /mnt/vpnconfigs ]
+    then
+        umount /mnt/vpnconfigs 2>/dev/null
+    fi
+
+    mkdir -p /mnt/vpnconfigs
+    mount -t tmpfs -o size=64m tmpfs /mnt/vpnconfigs
+    tar -zxf $PROGDIR/ovpn.tar.gz -C /mnt/vpnconfigs/
+
+elif [ "$operation" == "deinit" ]
+then
+    if [[ $EUID -ne 0 ]]
+    then
+        echo "ERROR: The '$operation' operation must be run as root." >&2
+        exit 1
+    fi
+
+    if [ ! -d /mnt/vpnconfigs ]
+    then
+        echo "ERROR: /mnt/vpnconfigs does not exist." >&2
+        exit 1
+    fi
+
+    umount /mnt/vpnconfigs
+    if [ -z "$(ls -A /mnt/vpnconfigs)" ]
+    then
+        rm -r /mnt/vpnconfigs
+    fi
+
+elif [ "$operation" == "connect" ]
+then
+    if [[ $EUID -ne 0 ]]
+    then
+        echo "ERROR: The '$operation' operation must be run as root." >&2
+        exit 1
+    fi
+
+    server="$2"
+    if [ -z "$server" ]
+    then
+        server="$(list_recommended | head -n 1)"
+    fi
+
+    conf="$(find /mnt/vpnconfigs/ovpn_udp -name "${server}*")"
+
+    if [ ! -f "$conf" ]
+    then
+        echo "ERROR: Configuration $conf not found." >&2
+        exit 1
+    fi
+
+    openvpn "$conf"
+else
+    usage
+    exit 1
+fi
