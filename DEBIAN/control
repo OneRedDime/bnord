@@ -1,0 +1,10 @@
+Package: bnord
+Version: 0.0.0
+Section: base
+Priority: optional
+Architecture: all
+Depends: bash, jq, openvpn
+Maintainer: Bo Cimino <ciminobo@protonmail.com>
+Changed-By: Bo Cimino <ciminobo@protonmail.com>
+Description: bnord
+ A simple program to ease opening a VPN to a NordVPN server.

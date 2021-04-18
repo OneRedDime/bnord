@@ -1,0 +1,84 @@
+=======
+ bnord
+=======
+
+-----------------------------------------
+Open a VPN connection to a NordVPN server
+-----------------------------------------
+
+.. include:: _manual-section.rst
+
+SYNOPSIS
+========
+
+**bnord** [opts] *command* [args]
+
+DESCRIPTION
+===========
+bnord is a program that makes it easy to connect to a desired NordVPN server.
+All bnord operations require root priviledges.
+
+::
+
+    # Download VPN configurations.
+    bnord update
+
+    # Mount them in the file system.
+    bnord init
+
+    # Connect to the recommended VPN server.
+    bnord connect
+
+    # Connect to a server supporing a specific feature. eg. P2P.
+    bnord connect --p2p
+
+    # Connect to a specific server.
+    bnord connect us3914
+
+    # Unmount the VPN configs.
+    bnord deinit
+
+Send SIGINT to bnord to terminate the connection (CTRL-C).
+
+OPERATIONS
+==========
+**update**
+        Download new nordvpn server config archive to /etc/bnord .
+
+**init**
+        Install server configs to tmpfs at /mnt/vpnconfigs .
+
+**deinit**
+        Unmount /mnt/vpnconfigs .
+
+**connect** [*server*]
+        Connect to the recommended server. Alternatively connect via the short
+        name (ie. us3914).
+
+Connection Options:
+
+OPTIONS
+=======
+**--p2p**
+        Connect to a server that supports P2P.
+
+**-t, --tcp**
+        Use the tcp protocol.
+
+**-u, --udp**
+        Use the udp protocol. This is the default.
+
+**-h, --help**
+        Print this help message.
+
+AUTHOR
+======
+bnord was developed by Bo Cimino <ciminobo@protonmail.com>.
+
+COPYRIGHT
+=========
+Copyright © 2021 Bo Cimino. License GPLv2: GNU GPL version 2.
+
+This is free software: you are free to change and redistribute it under
+the terms of the above license. There is NO WARRANTY, to the extent permitted
+by law.
