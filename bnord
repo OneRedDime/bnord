@@ -1,11 +1,24 @@
 #!/usr/bin/env bash
 ################################################################################
-# bnord - A wrapper for nordvpn's curl api for finding recommended servers.
+# bnord - Open a VPN connection to a NordVPN server.
+# Copyright (C) 2021  Bo Cimino
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; version 2 of the License.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ################################################################################
 
-PROGDIR="$(realpath $(dirname $0))"
+VERSION="0.0.0"
 
-# list the top 10 recommended servers
+# Print server hostnames based on filters.
 function list_recommended
 {
     curl --silent "https://api.nordvpn.com/v1/servers/recommendations" | jq --raw-output 'limit(10;.[]) | .hostname'
@@ -29,59 +42,59 @@ Operation can be one of the following
   connect [server]      Connect to the recommended server. Alternatively
                         connect via the short name (ie. us3914).
 
-  list                  List servers. Dump everything if args is not provided.
+Connection Options:
 
-Options:
+  -t, --tcp             Use the tcp protocol.
+
+  -u, --udp             Use the udp protocol. This is the default.
 
   -h, --help            Print this help message.
 "
 }
 
-# Transform long opts to short
-for arg in "$@"
-do
-    shift
-    case "$arg" in
-        "--help")
-            set -- "$@" "-h"
-            ;;
-        *)
-            set -- "$@" "$arg"
-            ;;
-    esac
-done
+# Defaults
+PROTOCOL="udp"
 
-# Process short opts mixed with positional args
-declare -a ARGS
-while [ $# -gt 0 ]
-do
-    unset OPTIND
-    unset OPTARG
+# gnu getopt
+ARGS=$(getopt -o tuh -l tcp,udp,version,help -- "$@")
+if [ "$?" != "0" ]
+then
+    exit 1
+fi
 
-    while getopts "h" OPTION; do
-        case $OPTION in
-        h)
+eval set -- "$ARGS"
+
+# parse args
+while true ; do
+    case "$1" in
+        -t|--tcp)
+            PROTOCOL="tcp"
+            shift
+            ;;
+        -u|--udp)
+            PROTOCOL="udp"
+            shift
+            ;;
+        --version)
+            echo "$VERSION"
+            exit 0
+            ;;
+        -h|--help)
             usage
             exit 0
+            ;;
+        --)
+            shift
+            break
             ;;
         *)
             usage
             exit 1
             ;;
-        esac
-    done
-
-    shift $((OPTIND-1))
-    if [ ! -z "$1" ]
-    then
-        ARGS+=("$1")
-    fi
-    shift
+    esac
 done
 
-# set positional parameters to become ARGS
-set -- "${ARGS[@]}"
-
+# args now only has positional args
 operation="$1"
 
 if [ -z "$operation" ]
@@ -90,28 +103,30 @@ then
     exit 1
 fi
 
+if [[ $EUID -ne 0 ]]
+then
+    echo "ERROR: Operations must be run as root." >&2
+    exit 1
+fi
+
 if [ "$operation" == "update" ]
 then
-    cd $PROGDIR
+    mkdir -p /etc/bnord
+    cd /etc/bnord
 
     wget https://downloads.nordcdn.com/configs/archives/servers/ovpn.zip
     if [ "$?" != "0" ]
     then
-        echo "ERROR: Could not retrieve new configs or place them in $(pwd)." >&2
+        echo "ERROR: Updating configs." >&2
         exit 1
     fi
 
     unzip ovpn.zip
     tar -zcf ovpn.tar.gz ovpn_tcp ovpn_udp
     rm -rf ovpn_tcp ovpn_udp ovpn.zip
+
 elif [ "$operation" == "init" ]
 then
-    if [[ $EUID -ne 0 ]]
-    then
-        echo "ERROR: The '$operation' operation must be run as root." >&2
-        exit 1
-    fi
-
     if [ -d /mnt/vpnconfigs ]
     then
         umount /mnt/vpnconfigs 2>/dev/null
@@ -119,16 +134,10 @@ then
 
     mkdir -p /mnt/vpnconfigs
     mount -t tmpfs -o size=64m tmpfs /mnt/vpnconfigs
-    tar -zxf $PROGDIR/ovpn.tar.gz -C /mnt/vpnconfigs/
+    tar -zxf /etc/bnord/ovpn.tar.gz -C /mnt/vpnconfigs/
 
 elif [ "$operation" == "deinit" ]
 then
-    if [[ $EUID -ne 0 ]]
-    then
-        echo "ERROR: The '$operation' operation must be run as root." >&2
-        exit 1
-    fi
-
     if [ ! -d /mnt/vpnconfigs ]
     then
         echo "ERROR: /mnt/vpnconfigs does not exist." >&2
@@ -143,19 +152,13 @@ then
 
 elif [ "$operation" == "connect" ]
 then
-    if [[ $EUID -ne 0 ]]
-    then
-        echo "ERROR: The '$operation' operation must be run as root." >&2
-        exit 1
-    fi
-
     server="$2"
     if [ -z "$server" ]
     then
         server="$(list_recommended | head -n 1)"
     fi
 
-    conf="$(find /mnt/vpnconfigs/ovpn_udp -name "${server}*")"
+    conf="$(find /mnt/vpnconfigs/ovpn_${PROTOCOL} -name "${server}.*")"
 
     if [ ! -f "$conf" ]
     then
@@ -164,6 +167,7 @@ then
     fi
 
     openvpn "$conf"
+
 else
     usage
     exit 1
