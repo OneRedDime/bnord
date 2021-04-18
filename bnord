@@ -21,7 +21,23 @@ VERSION="0.0.0"
 # Print server hostnames based on filters.
 function list_recommended
 {
-    curl --silent "https://api.nordvpn.com/v1/servers/recommendations" | jq --raw-output 'limit(10;.[]) | .hostname'
+    local type_="$1"
+    local filters=()
+
+    if [[ "$type_" =~ "p2p" ]]
+    then
+        filters+=('"servers_groups":15')
+    fi
+
+    if [ ! -z "${filters[@]}" ]
+    then
+        filters=$(printf ",%s" "${filters[@]}")
+        filters=${filters:1}
+        filters="?filters={${filters}}"
+    fi
+
+    url="https://api.nordvpn.com/v1/servers/recommendations${filters}"
+    curl --silent "$url" | jq --raw-output 'limit(10;.[]) | .hostname'
 }
 
 function usage
@@ -44,6 +60,8 @@ Operation can be one of the following
 
 Connection Options:
 
+  --p2p                 Connect to a server that supports P2P.
+
   -t, --tcp             Use the tcp protocol.
 
   -u, --udp             Use the udp protocol. This is the default.
@@ -56,7 +74,7 @@ Connection Options:
 PROTOCOL="udp"
 
 # gnu getopt
-ARGS=$(getopt -o tuh -l tcp,udp,version,help -- "$@")
+ARGS=$(getopt -o tuh -l p2p,tcp,udp,version,help -- "$@")
 if [ "$?" != "0" ]
 then
     exit 1
@@ -65,8 +83,13 @@ fi
 eval set -- "$ARGS"
 
 # parse args
+filters=""
 while true ; do
     case "$1" in
+        --p2p)
+            filters="$filters p2p"
+            shift
+            ;;
         -t|--tcp)
             PROTOCOL="tcp"
             shift
@@ -155,7 +178,7 @@ then
     server="$2"
     if [ -z "$server" ]
     then
-        server="$(list_recommended | head -n 1)"
+        server="$(list_recommended $filters | head -n 1)"
     fi
 
     conf="$(find /mnt/vpnconfigs/ovpn_${PROTOCOL} -name "${server}.*")"
