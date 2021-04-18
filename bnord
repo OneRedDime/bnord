@@ -51,10 +51,6 @@ Operation can be one of the following
 
   update                Download new nordvpn server config archive.
 
-  init                  Install server configs to tmpfs at /mnt/vpnconfigs .
-
-  deinit                Unmount /mnt/vpnconfigs .
-
   connect [server]      Connect to the recommended server. Alternatively
                         connect via the short name (ie. us3914).
 
@@ -144,34 +140,9 @@ then
         exit 1
     fi
 
+    rm -rf ovpn_tcp ovpn_udp
     unzip ovpn.zip
-    tar -zcf ovpn.tar.gz ovpn_tcp ovpn_udp
-    rm -rf ovpn_tcp ovpn_udp ovpn.zip
-
-elif [ "$operation" == "init" ]
-then
-    if [ -d /mnt/vpnconfigs ]
-    then
-        umount /mnt/vpnconfigs 2>/dev/null
-    fi
-
-    mkdir -p /mnt/vpnconfigs
-    mount -t tmpfs -o size=64m tmpfs /mnt/vpnconfigs
-    tar -zxf /etc/bnord/ovpn.tar.gz -C /mnt/vpnconfigs/
-
-elif [ "$operation" == "deinit" ]
-then
-    if [ ! -d /mnt/vpnconfigs ]
-    then
-        echo "ERROR: /mnt/vpnconfigs does not exist." >&2
-        exit 1
-    fi
-
-    umount /mnt/vpnconfigs
-    if [ -z "$(ls -A /mnt/vpnconfigs)" ]
-    then
-        rm -r /mnt/vpnconfigs
-    fi
+    rm ovpn.zip
 
 elif [ "$operation" == "connect" ]
 then
@@ -181,7 +152,7 @@ then
         server="$(list_recommended $filters | head -n 1)"
     fi
 
-    conf="$(find /mnt/vpnconfigs/ovpn_${PROTOCOL} -name "${server}.*")"
+    conf="$(find /etc/bnord/ovpn_${PROTOCOL} -name "${server}.*")"
 
     if [ ! -f "$conf" ]
     then

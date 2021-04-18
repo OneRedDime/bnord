@@ -23,9 +23,6 @@ All bnord operations require root priviledges.
     # Download VPN configurations.
     bnord update
 
-    # Mount them in the file system.
-    bnord init
-
     # Connect to the recommended VPN server.
     bnord connect
 
@@ -35,21 +32,12 @@ All bnord operations require root priviledges.
     # Connect to a specific server.
     bnord connect us3914
 
-    # Unmount the VPN configs.
-    bnord deinit
-
 Send SIGINT to bnord to terminate the connection (CTRL-C).
 
 OPERATIONS
 ==========
 **update**
         Download new nordvpn server config archive to /etc/bnord .
-
-**init**
-        Install server configs to tmpfs at /mnt/vpnconfigs .
-
-**deinit**
-        Unmount /mnt/vpnconfigs .
 
 **connect** [*server*]
         Connect to the recommended server. Alternatively connect via the short
