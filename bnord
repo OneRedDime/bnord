@@ -45,7 +45,7 @@ function usage
 echo "\
 usage: $0 [option]... operation
 
-This program must be run as root. ctrl-c to stop a connection.
+Use ctrl-c to stop a connection.
 
 Operation can be one of the following
 
@@ -53,6 +53,9 @@ Operation can be one of the following
 
   connect [server]      Connect to the recommended server. Alternatively
                         connect via the short name (ie. us3914).
+
+  list [num]            List hostnames that match the criterion. 10 is the
+                        maximum that can be displayed.
 
 Connection Options:
 
@@ -122,9 +125,11 @@ then
     exit 1
 fi
 
-if [[ $EUID -ne 0 ]]
+# Check for root for certain operations.
+sudo_ops="update connect"
+if [[ $EUID -ne 0 ]] && [[ "$sudo_ops" =~ "$operation" ]]
 then
-    echo "ERROR: Operations must be run as root." >&2
+    echo "ERROR: 'bnord $operation' must be run as root." >&2
     exit 1
 fi
 
@@ -162,6 +167,14 @@ then
 
     openvpn "$conf"
 
+elif [ "$operation" == "list" ]
+then
+    num="$2"
+    if [ -z $num ]
+    then
+        num=1
+    fi
+    list_recommended $filters | head -n "$num"
 else
     usage
     exit 1
