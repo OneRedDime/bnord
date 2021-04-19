@@ -29,6 +29,11 @@ function list_recommended
         filters+=('"servers_groups":15')
     fi
 
+    if [[ "$type_" =~ "wireguard" ]]
+    then
+        filters+=('"servers_technologies":[35]')
+    fi
+
     if [ ! -z "${filters[@]}" ]
     then
         filters=$(printf ",%s" "${filters[@]}")
@@ -62,6 +67,8 @@ Connection Options:
 
   -u, --udp             Use the udp protocol. This is the default.
 
+  --wireguard           Connect to a WireGuard server.
+
   -h, --help            Print this help message.
 "
 }
@@ -70,7 +77,7 @@ Connection Options:
 PROTOCOL="udp"
 
 # gnu getopt
-ARGS=$(getopt -o tuh -l p2p,tcp,udp,version,help -- "$@")
+ARGS=$(getopt -o tuh -l p2p,tcp,udp,version,wireguard,help -- "$@")
 if [ "$?" != "0" ]
 then
     exit 1
@@ -97,6 +104,10 @@ while true ; do
         --version)
             echo "$VERSION"
             exit 0
+            ;;
+        --wireguard)
+            filters="$filters wireguard"
+            shift
             ;;
         -h|--help)
             usage
