@@ -16,7 +16,6 @@ SYNOPSIS
 DESCRIPTION
 ===========
 bnord is a program that makes it easy to connect to a desired NordVPN server.
-All bnord operations require root priviledges.
 
 ::
 
@@ -43,10 +42,12 @@ OPERATIONS
         Connect to the recommended server. Alternatively connect via the short
         name (ie. us3914).
 
-Connection Options:
+**list** [*num*]
+        List hostnames that match the provided criterion. Num is the number
+        of hostnames that will be printed, up to 10.
 
-OPTIONS
-=======
+CONNECTION OPTIONS
+==================
 **--p2p**
         Connect to a server that supports P2P.
 

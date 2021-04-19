@@ -6,6 +6,20 @@ All notable changes to bnord will be documented in this file.
 The format is based on `Keep a Changelog <https://keepachangelog.com/en/1.0.0/>`_,
 and this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`_.
 
+[unreleased]
+============
+Added
+-----
+- New command to list server hostnames that match the provided criterion.
+
+Changed
+-------
+- Only certain bnord commands require root privileges.
+
+Fixed
+-----
+- Typo in bnord man page.
+
 [1.0.0] - 2021-04-18
 ====================
 This is the first official tag for bnord.
