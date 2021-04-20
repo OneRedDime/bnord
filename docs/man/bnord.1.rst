@@ -46,6 +46,14 @@ OPERATIONS
         List hostnames that match the provided criterion. Num is the number
         of hostnames that will be printed, up to 10.
 
+GENERAL OPTIONS
+===============
+**--version**
+        Display the version of bnord.
+
+**-h, --help**
+        Print the help message.
+
 CONNECTION OPTIONS
 ==================
 **--p2p**
@@ -56,9 +64,6 @@ CONNECTION OPTIONS
 
 **-u, --udp**
         Use the udp protocol. This is the default.
-
-**-h, --help**
-        Print this help message.
 
 AUTHOR
 ======

@@ -18,6 +18,7 @@ Changed
 
 Fixed
 -----
+- Added ``--version`` to the help message and man page.
 - Typo in bnord man page.
 
 [1.0.0] - 2021-04-18

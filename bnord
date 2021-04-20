@@ -57,6 +57,12 @@ Operation can be one of the following
   list [num]            List hostnames that match the criterion. 10 is the
                         maximum that can be displayed.
 
+General Options:
+
+  --version             Display the version of bnord.
+
+  -h, --help            Print this help message.
+
 Connection Options:
 
   --p2p                 Connect to a server that supports P2P.
@@ -64,8 +70,6 @@ Connection Options:
   -t, --tcp             Use the tcp protocol.
 
   -u, --udp             Use the udp protocol. This is the default.
-
-  -h, --help            Print this help message.
 "
 }
 
