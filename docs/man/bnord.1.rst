@@ -64,15 +64,3 @@ CONNECTION OPTIONS
 
 **-u, --udp**
         Use the udp protocol. This is the default.
-
-AUTHOR
-======
-bnord was developed by Bo Cimino <ciminobo@protonmail.com>.
-
-COPYRIGHT
-=========
-Copyright © 2021 Bo Cimino. License GPLv2: GNU GPL version 2.
-
-This is free software: you are free to change and redistribute it under
-the terms of the above license. There is NO WARRANTY, to the extent permitted
-by law.

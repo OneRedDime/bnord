@@ -20,6 +20,7 @@ Fixed
 -----
 - Added ``--version`` to the help message and man page.
 - Typo in bnord man page.
+- Curl is now properly listed as an install dependency.
 
 [1.0.0] - 2021-04-18
 ====================

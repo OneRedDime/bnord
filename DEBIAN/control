@@ -3,7 +3,7 @@ Version: 1.0.0
 Section: base
 Priority: optional
 Architecture: all
-Depends: bash, jq, openvpn
+Depends: bash, curl, jq, openvpn
 Maintainer: Bo Cimino <ciminobo@protonmail.com>
 Changed-By: Bo Cimino <ciminobo@protonmail.com>
 Description: bnord
